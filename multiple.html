@@ -1,0 +1,303 @@
+<html lang="en"><head>
+		<title>three.js webgl - multiple elements</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			* {
+				box-sizing: border-box;
+				-moz-box-sizing: border-box;
+			}
+
+			body {
+				color: #000;
+				font-family:Monospace;
+				font-size:13px;
+
+				background-color: #fff;
+				margin: 0px;
+			}
+
+			#info{
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+				text-align:center;
+			}
+
+			#content {
+				position: absolute;
+				top: 0px; width: 100%;
+				z-index: 1;
+				padding: 3em 0 0 0;
+			}
+
+			a {
+				color: #0080ff;
+			}
+
+			#c {
+				position: fixed;
+				left: 0px;
+				width: 100%;
+				height: 100%;
+			}
+
+			.list-item {
+				display: inline-block;
+				margin: 1em;
+				padding: 1em;
+				box-shadow: 1px 2px 4px 0px rgba(0,0,0,0.25);
+			}
+
+			.list-item .scene {
+				width: 450px;
+				height: 450px;
+                margin: auto;
+			}
+
+			.list-item .description {
+				color: #888;
+				font-family: sans-serif;
+				font-size: large;
+				width: 200px;
+				margin-top: 0.5em;
+			}
+		</style>
+	<body>
+		<canvas id="c" width="1552" height="990"></canvas>
+
+		<div id="content">
+			<div i="info"><a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - multiple elements - webgl</div>
+		
+		</div><div class="list-item">
+		</div></div>
+
+		<script src="scripts/conc/three.js"></script>
+		<script src="scripts/conc/orbitControls.js"></script>
+		<script src="scripts/conc/Detector.js"></script>
+
+		<script id="template" type="notjs">
+			<div class="scene"></div>
+			<div class="description">Scene $</div>
+		</script>
+		<script>
+
+            //Checks if webgl is enabled
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+                //Defining global variables;
+                var canvas;
+                var scenes = [], renderer;
+                var geometrries = [];
+                var materials = [];
+                var template;
+                var content;
+
+
+                //executing startup functions
+                initialize();
+                animate();
+
+			function initialize() {
+                //Defining the canvas workspace;                    
+				canvas = document.getElementById( "c" );
+                template = document.getElementById( "template" ).text;
+                content = document.getElementById( "content" );
+
+                //Defining the render properties
+				renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
+				renderer.setClearColor( 0xffffff, 1 );
+                renderer.setPixelRatio( window.devicePixelRatio );
+
+                //Defining the geometries and materials array;
+				geometries = [
+					new THREE.BoxBufferGeometry( 0.5, 0.5, 0.5 ),
+					new THREE.SphereBufferGeometry( 0.5, 12, 8 ),
+					new THREE.DodecahedronBufferGeometry( 0.5 ),
+					new THREE.CylinderBufferGeometry( 0.5, 0.5, 1, 12 )
+                ];
+                materials = [
+                    new THREE.MeshStandardMaterial({
+						color: new THREE.Color().setHSL( Math.random(), 1, 0.75 ),
+						roughness: 0.5,
+						metalness: 0,
+						flatShading: true
+                    }),
+                    new THREE.MeshStandardMaterial({
+						color: new THREE.Color().setHSL( Math.random(), 1, 0.75 ),
+						roughness: 0.1,
+						metalness: 5,
+						flatShading: true
+                    }),
+                    new THREE.MeshStandardMaterial({
+						color: new THREE.Color().setHSL( Math.random(), 1, 0.75 ),
+						roughness: 0.1,
+						metalness: 8,
+						flatShading: false
+                    })
+                ];
+                
+                //Generating scenes
+				for (var i =  0; i < 5; i ++) {
+                    scene = generateScene(i);
+                    scenes.push( scene );
+				}
+			}
+
+
+            function generateScene(index) {
+                var scene = new THREE.Scene();
+
+                //#1 - Make a list item to input the scene. (HTML)
+                var element = document.createElement( "div" );
+                element.className = "list-item";
+                element.innerHTML = template.replace('$', index + 1);
+
+                // Look up the element that represents the area
+                // we want to render the scene
+                scene.userData.element = element.querySelector( ".scene" );
+                content.appendChild( element );
+                
+                //#2 - Defining camera scene
+                var camera = new THREE.PerspectiveCamera( 50, 1, 1, 10 );
+                camera.position.z = 2;
+                scene.userData.camera = camera;
+
+                //#3 - Defining the orbit controsl to drarg and drop the object rotation
+                setOrbitControlls(scene);
+
+                //#4 - Add rarndom polygon to scene (with plane below)
+                addRandomPolygon(scene, index);
+
+                //#5 - LIGHTS
+                addLights(scene);
+
+                return scene;
+            }
+
+
+            /** -----------------------------------------------------------------
+             helper functions
+             ----------------------------------------------------------------- **/
+
+
+            function addRandomPolygon(scene, i){
+                // add one random mesh  with one random material to the scene
+                var geometry = geometries[ geometries.length * Math.random() | 0 ];
+                var material = materials[i % 3];
+                
+                var polygon = new THREE.Mesh(geometry, material);
+                polygon.castShadow = true;
+                polygon.receiveShadow = true;
+                scene.add(polygon);
+
+                addFlooToPoygon(scene);
+            }
+
+
+            function addFlooToPoygon(scene){
+                //Create a plane that receives shadows (but does not cast them)
+                var planeGeometry = new THREE.PlaneBufferGeometry( 1.7, 1.7, 10 );
+                var planeMaterial    = new THREE.MeshBasicMaterial( {color: 0xc3c3c3, side: THREE.DoubleSide} );
+                var plane = new THREE.Mesh( planeGeometry, planeMaterial );
+                plane.receiveShadow = true; 
+                plane.position.set(0, -0.5, 0);
+
+                 //TODO verificar porqrue é necessárrio rodar 90 grraus ao invés de iniciar o plano nas coords certas.
+                plane.rotateX((90 * Math.PI)/180)
+                scene.add(plane);
+            }
+
+
+            function addLights(scene){
+
+                //Directional light
+                var light = new THREE.DirectionalLight( 0xffffff, 0.5 );
+                light.position.set(1, 1, 1);
+                scene.add(light);
+
+                //TODO Hemisphere light?
+                //TODO spotlight light?
+
+            }
+
+
+            function setOrbitControlls(scene){
+                var controls = new THREE.OrbitControls( scene.userData.camera, scene.userData.element );
+					controls.minDistance = 2;
+					controls.maxDistance = 5;
+					controls.enablePan = false;
+					controls.enableZoom = false;
+                    scene.userData.controls = controls;
+                    
+            }
+
+
+
+            /** -----------------------------------------------------------------
+             RENDER FUNCTIONS
+             ----------------------------------------------------------------- **/
+
+            /**
+             * Updates the window widht and height when resize to mantain the aspect ratio
+             */
+			function updateSize() {
+				var width = canvas.clientWidth;
+				var height = canvas.clientHeight;
+
+				if ( canvas.width !== width || canvas.height !== height ) {
+					renderer.setSize( width, height, false );
+				}
+			}
+
+			function animate() {
+				render();
+				requestAnimationFrame(animate);
+			}
+
+
+			function render() {
+                //Updates when user changes the window resolution
+				updateSize();
+
+				renderer.setClearColor( 0xe0e0e0 );
+				renderer.setScissorTest( false );
+				renderer.clear();
+
+				renderer.setClearColor( 0xffffff );
+				renderer.setScissorTest( true );
+
+                //RENDERING THE SCENES
+				scenes.forEach(function(scene) {
+
+                    //Defining the rotation speed in y axis. (using a date timestamp as scalar)
+					scene.children[ 0 ].rotation.y = Date.now() * 0.0003;
+
+					// get the element that is a place holder for where we want to draw the scene
+					var element = scene.userData.element;
+
+					// get its position relative to the page's viewport
+					var rect = element.getBoundingClientRect();
+
+					// check if it's offscreen. If so skip it
+					if ( rect.bottom < 0 || rect.top  > renderer.domElement.clientHeight ||
+						 rect.right  < 0 || rect.left > renderer.domElement.clientWidth ) {
+						return;  // it's off screen
+					}
+
+					// set the viewport
+					var width  = rect.right - rect.left;
+					var height = rect.bottom - rect.top;
+					var left   = rect.left;
+					var top    = rect.top;
+
+					renderer.setViewport( left, top, width, height );
+					renderer.setScissor( left, top, width, height );
+
+					var camera = scene.userData.camera;
+					//scene.userData.controls.update();
+					renderer.render( scene, camera );
+				} );
+			}
+		</script>
+<style id="extraClass">.extraClassAspect {-webkit-transform: scaleX(1.34)!important}.extraClassCrop {-webkit-transform: scale(1.34)!important}</style></body></html>-transform: scale(1.34)!important}</style></body></html>
