@@ -108,32 +108,31 @@
 				renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
 				renderer.setClearColor( 0xffffff, 1 );
                 renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 
                 //Defining the geometries and materials array;
 				geometries = [
 					new THREE.BoxBufferGeometry( 0.5, 0.5, 0.5 ),
 					new THREE.SphereBufferGeometry( 0.5, 12, 8 ),
 					new THREE.DodecahedronBufferGeometry( 0.5 ),
-					new THREE.CylinderBufferGeometry( 0.5, 0.5, 1, 12 )
+					new THREE.CylinderBufferGeometry( 0.3, 0.3, 0.5, 12 )
                 ];
                 materials = [
                     new THREE.MeshStandardMaterial({
 						color: new THREE.Color().setHSL( Math.random(), 1, 0.75 ),
-						roughness: 0.5,
-						metalness: 0,
+						metalness: 0.6,
 						flatShading: true
                     }),
                     new THREE.MeshStandardMaterial({
 						color: new THREE.Color().setHSL( Math.random(), 1, 0.75 ),
-						roughness: 0.1,
-						metalness: 5,
+						metalness: 0.8,
 						flatShading: true
                     }),
                     new THREE.MeshStandardMaterial({
 						color: new THREE.Color().setHSL( Math.random(), 1, 0.75 ),
-						roughness: 0.1,
-						metalness: 8,
-						flatShading: false
+						metalness: 1,
+						flatShading: true
                     })
                 ];
                 
@@ -147,6 +146,8 @@
 
             function generateScene(index) {
                 var scene = new THREE.Scene();
+
+				addBackground(scene);
 
                 //#1 - Make a list item to input the scene. (HTML)
                 var element = document.createElement( "div" );
@@ -172,6 +173,12 @@
                 //#5 - LIGHTS
                 addLights(scene);
 
+				if (index % 3 === 0){
+					//add fog
+					fogColor = new THREE.Color(0xffffff)
+					scene.fog = new THREE.Fog(fogColor, 0.0025, 20)
+				}
+
                 return scene;
             }
 
@@ -179,6 +186,23 @@
             /** -----------------------------------------------------------------
              helper functions
              ----------------------------------------------------------------- **/
+
+			function addBackground(scene) {
+				var textureLoader = new THREE.TextureLoader()
+				var k = textureLoader.load("textures/background1.jpg", function(texture){
+					texture.mapping = THREE.UVMapping;
+					var img = texture.image;
+					bgWidth= img.width;
+					bgHeight = img.height;
+					resize();		
+					console.log(texture)
+					scene.background = bgTexture; 
+				});
+
+				scene.background = k;
+
+
+			}
 
 
             function addRandomPolygon(scene, i){
@@ -196,9 +220,12 @@
 
 
             function addFlooToPoygon(scene){
+				//Loading texture
+				var texture = new THREE.TextureLoader().load("textures/floor.png");
+
                 //Create a plane that receives shadows (but does not cast them)
                 var planeGeometry = new THREE.PlaneBufferGeometry( 1.7, 1.7, 10 );
-                var planeMaterial    = new THREE.MeshBasicMaterial( {color: 0xc3c3c3, side: THREE.DoubleSide} );
+                var planeMaterial    = new THREE.MeshBasicMaterial( {map: texture, side: THREE.DoubleSide} );
                 var plane = new THREE.Mesh( planeGeometry, planeMaterial );
                 plane.receiveShadow = true; 
                 plane.position.set(0, -0.5, 0);
@@ -206,6 +233,7 @@
                  //TODO verificar porqrue é necessárrio rodar 90 grraus ao invés de iniciar o plano nas coords certas.
                 plane.rotateX((90 * Math.PI)/180)
                 scene.add(plane);
+
             }
 
 
@@ -213,12 +241,23 @@
 
                 //Directional light
                 var light = new THREE.DirectionalLight( 0xffffff, 0.5 );
-                light.position.set(1, 1, 1);
+                light.position.set(1, 1, 1)
+				light.castShadow = true;
                 scene.add(light);
+
+				var helper = new THREE.DirectionalLightHelper( light, 5 );
+				scene.add( helper );
+
+				light.shadow.mapSize.width = 1000;  // default
+				light.shadow.mapSize.height = 1000; // default
+				light.shadow.camera.near = 1;    // default
+				light.shadow.camera.far = 1000;     // default
 
                 //TODO Hemisphere light?
                 //TODO spotlight light?
 
+				var light = new THREE.HemisphereLight( 0xffffff, 0x080820, 1 );
+				scene.add( light );
             }
 
 
