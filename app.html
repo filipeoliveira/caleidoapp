@@ -92,7 +92,8 @@
                 var materials = [];
                 var template;
                 var content;
-
+                var refractSphere;
+                var refractSphereCamera;
 
                 //executing startup functions
                 initialize();
@@ -167,9 +168,13 @@
                 //#3 - Defining the orbit controsl to drarg and drop the object rotation
                 setOrbitControlls(scene);
 
-                //#4 - Add rarndom polygon to scene (with plane below)
-                addRandomPolygon(scene, index);
-
+                if(index == 4){
+                	addPolygonRefracted(scene);
+                }
+           		else{
+	                //#4 - Add rarndom polygon to scene (with plane below)
+	                addRandomPolygon(scene, index);
+                }
                 //#5 - LIGHTS
                 addLights(scene);
 
@@ -236,6 +241,26 @@
 
             }
 
+            function addPolygonRefracted(scene){
+            	var sphereGeom =  geometries[geometries.length * Math.random() | 0];
+				refractSphereCamera = new THREE.CubeCamera( 0.1, 5000, 512 );				
+				refractSphereCamera.renderTarget.mapping = THREE.CubeRefractionMapping;
+				
+				//material de refracao, atributos basicos
+				var refractMaterial = new THREE.MeshBasicMaterial( { 
+					color: 0xccccff, 
+					envMap: refractSphereCamera.renderTarget, 
+					refractionRatio: 0.985, 
+					reflectivity: 0.9,
+					} );		
+
+				refractSphere = new THREE.Mesh( sphereGeom, refractMaterial );
+				refractSphere.position.set(0,0,0);
+				refractSphere.castShadow = true;
+                refractSphere.receiveShadow = true;
+				scene.add(refractSphere);
+				addFlooToPoygon(scene);
+            }
 
             function addLights(scene){
 
@@ -335,6 +360,10 @@
 
 					var camera = scene.userData.camera;
 					//scene.userData.controls.update();
+					//atualizando map de refracao
+					refractSphere.visible = false;
+					refractSphereCamera.updateCubeMap( renderer, scene );
+					refractSphere.visible = true;
 					renderer.render( scene, camera );
 				} );
 			}
