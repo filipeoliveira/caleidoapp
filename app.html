@@ -47,12 +47,13 @@
 				margin: 1em;
 				padding: 1em;
 				box-shadow: 1px 2px 4px 0px rgba(0,0,0,0.25);
+                margin-left: 2.5em;
+				border: 1px solid #c3c3c3;
 			}
 
 			.list-item .scene {
-				width: 450px;
-				height: 450px;
-                margin: auto;
+				width: 600px;
+				height: 600px;
 			}
 
 			.list-item .description {
@@ -65,9 +66,20 @@
 		</style>
 	<body>
 		<canvas id="c" width="1552" height="990"></canvas>
-
 		<div id="content">
-			<div i="info"><a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - multiple elements - webgl</div>
+			<div i="info" style="margin-left: 3em;">
+				<h3>Projeto de CG 2018.1 - CALEIDO APP</h3>
+				<br>
+				<span>Filipe Oliveira</span><br>
+				<span>Murilo Moura</span><br>
+				<span>Yago Serpa</span><br>
+				<br>
+				<h4>
+					Instruções:
+				</h4>
+				<span>Use as teclas AWSD para movimentar a cena.</span><br>
+				<span>O scroll do mouse pode ser usado para dar zoom in ou zoom out na cena.</span>
+			</div>
 		
 		</div><div class="list-item">
 		</div></div>
@@ -78,7 +90,7 @@
 
 		<script id="template" type="notjs">
 			<div class="scene"></div>
-			<div class="description">Scene $</div>
+			<div class="description">Cena nº$</div>
 		</script>
 		<script>
 
@@ -109,7 +121,9 @@
 				renderer.setClearColor( 0xffffff, 1 );
                 renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.shadowMap.enabled = true;
-				renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
 
                 //Defining the geometries and materials array;
 				geometries = [
@@ -146,8 +160,10 @@
 
             function generateScene(index) {
                 var scene = new THREE.Scene();
-
 				addBackground(scene);
+
+
+			
 
                 //#1 - Make a list item to input the scene. (HTML)
                 var element = document.createElement( "div" );
@@ -171,7 +187,22 @@
                 addRandomPolygon(scene, index);
 
                 //#5 - LIGHTS
-                addLights(scene);
+				//addLights(scene);
+				
+				var spotLight = new THREE.SpotLight( 0xffffff );
+				spotLight.angle = Math.PI / 8;
+				spotLight.penumbra = 0.2;
+				spotLight.position.set( 3, 3, 3 );
+				spotLight.castShadow = true;
+				spotLight.shadow.camera.near = 3;
+				spotLight.shadow.camera.far = 10;
+				spotLight.shadow.mapSize.width = 1024;
+				spotLight.shadow.mapSize.height = 1024;
+				scene.add( spotLight );
+
+				var spotLightHelper = new THREE.SpotLightHelper( spotLight );
+				scene.add( spotLightHelper );
+
 
 				if (index % 3 === 0){
 					//add fog
@@ -194,9 +225,6 @@
 					var img = texture.image;
 					bgWidth= img.width;
 					bgHeight = img.height;
-					resize();		
-					console.log(texture)
-					scene.background = bgTexture; 
 				});
 
 				scene.background = k;
@@ -211,15 +239,15 @@
                 var material = materials[i % 3];
                 
                 var polygon = new THREE.Mesh(geometry, material);
-                polygon.castShadow = true;
-                polygon.receiveShadow = true;
+				polygon.castShadow = true;
+				polygon.receiveShadow = true;
                 scene.add(polygon);
 
-                addFlooToPoygon(scene);
+                addGround(scene);
             }
 
 
-            function addFlooToPoygon(scene){
+            function addGround(scene){
 				//Loading texture
 				var texture = new THREE.TextureLoader().load("textures/floor.png");
 
@@ -227,7 +255,8 @@
                 var planeGeometry = new THREE.PlaneBufferGeometry( 1.7, 1.7, 10 );
                 var planeMaterial    = new THREE.MeshBasicMaterial( {map: texture, side: THREE.DoubleSide} );
                 var plane = new THREE.Mesh( planeGeometry, planeMaterial );
-                plane.receiveShadow = true; 
+				plane.receiveShadow = true; 
+				plane.castShadow = true;
                 plane.position.set(0, -0.5, 0);
 
                  //TODO verificar porqrue é necessárrio rodar 90 grraus ao invés de iniciar o plano nas coords certas.
@@ -264,9 +293,15 @@
             function setOrbitControlls(scene){
                 var controls = new THREE.OrbitControls( scene.userData.camera, scene.userData.element );
 					controls.minDistance = 2;
-					controls.maxDistance = 5;
-					controls.enablePan = false;
-					controls.enableZoom = false;
+					controls.maxDistance = 50;
+					controls.enablePan = true;
+					controls.enableZoom = true;
+					controls.keys = {
+						LEFT: 65, //left arrow
+						UP: 87, // up arrow
+						RIGHT: 68, // right arrow
+						BOTTOM: 83 // down arrow
+					}
                     scene.userData.controls = controls;
                     
             }
