@@ -302,7 +302,7 @@
 				refractSphere.castShadow = true;
                 refractSphere.receiveShadow = true;
 				scene.add(refractSphere);
-				addFlooToPoygon(scene);
+				addGround(scene);
             }
 
 			function addAmbientLight(scene){
@@ -390,8 +390,6 @@
 				scenes.forEach(function(scene) {
 
 					//Defining the rotation speed in y axis. (using a date timestamp as scalar)
-					
-					console.log(scene.children);
 					scene.children[4].rotation.y = Date.now() * 0.0003;
 
 					// get the element that is a place holder for where we want to draw the scene
