@@ -264,28 +264,7 @@
 
 
             function addPolygonRefracted(scene){
-            	var sphereGeom =  geometries[geometries.length * Math.random() | 0];
-				refractSphereCamera = new THREE.CubeCamera( 0.1, 5000, 512 );				
-				refractSphereCamera.renderTarget.mapping = THREE.CubeRefractionMapping;
-				
-				//material de refracao, atributos basicos
-				var refractMaterial = new THREE.MeshBasicMaterial( { 
-					color: 0xccccff, 
-					envMap: refractSphereCamera.renderTarget, 
-					refractionRatio: 0.985, 
-					reflectivity: 0.9,
-					} );		
-
-				refractSphere = new THREE.Mesh( sphereGeom, refractMaterial );
-				refractSphere.position.set(0,0,0);
-				refractSphere.castShadow = true;
-                refractSphere.receiveShadow = true;
-				scene.add(refractSphere);
-				addGround(scene);
-            }
-
-            function addPolygonRefracted(scene){
-            	var sphereGeom =  geometries[geometries.length * Math.random() | 0];
+            	var sphereGeom =  geometries[2];
 				refractSphereCamera = new THREE.CubeCamera( 0.1, 5000, 512 );				
 				refractSphereCamera.renderTarget.mapping = THREE.CubeRefractionMapping;
 				
